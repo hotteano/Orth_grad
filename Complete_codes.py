@@ -8,7 +8,7 @@ from torch.optim import Optimizer
 import math
 import numpy as np
 
-# 设备配置
+# Device Setting
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -66,7 +66,7 @@ class Orth_grad(Optimizer):
         Returns:
             Tensor: Orthogonal Matrix
         """
-        # 合并梯度和曲率信息
+        # Grad and Curvature
         if curv is not None and curv.norm() > eps:
             combined = torch.stack([grad.flatten(), curv.flatten()])  # [2, d]
         else:
@@ -74,7 +74,7 @@ class Orth_grad(Optimizer):
 
         # applying Newton-Schulz
         orth_matrix = self.newtonschulz5(combined, steps=5)
-        return orth_matrix[0].view_as(g_orth)  # 取首行恢复形状
+        return orth_matrix[0].view_as(g_orth)
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -238,7 +238,7 @@ def check_orthogonality(model, optimizer, test_loader):
     print(f"Orthogonality score: {np.mean(orth_scores):.2e} (should be close to 0)")
 
 def main():
-    # 增强的数据转换
+    # Data arg
     transform_train = transforms.Compose([
         transforms.RandomHorizontalFlip(),
         transforms.RandomCrop(32, padding=4),
@@ -251,7 +251,7 @@ def main():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    # 数据加载
+    # Data Loading
     train_dataset = torchvision.datasets.CIFAR10(
         root='./data', train=True, download=True, transform=transform_train)
     test_dataset = torchvision.datasets.CIFAR10(
@@ -261,13 +261,13 @@ def main():
         train_dataset, batch_size=128, shuffle=True, num_workers=4)
     test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=256, shuffle=False, num_workers=4)
-    # 模型和优化器
+
+    # Model and optim
     model = CIFARNet().to(device)
     optimizer = Orth_grad(model.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
 
-    # 训练循环
-    for epoch in range(1, 10):  # 延长训练周期
+    for epoch in range(1, 30): 
         train(model, device, train_loader, optimizer, epoch)
         test(model, device, test_loader)
         scheduler.step()
@@ -276,4 +276,5 @@ def main():
 
 
 if __name__ == '__main__':
+
     main()
