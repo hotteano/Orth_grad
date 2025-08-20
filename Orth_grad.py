@@ -60,7 +60,7 @@ class Orth_grad(Optimizer):
 
         # applying Newton-Schulz
         orth_matrix = self.newtonschulz5(combined, steps=5)
-        return orth_matrix[0].view_as(g_orth)  # 取首行恢复形状
+        return orth_matrix[0].view_as(g_orth)
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -80,7 +80,7 @@ class Orth_grad(Optimizer):
 
                 state = self.state.setdefault(p, {})
 
-                # 初始化状态
+                # Initialization
                 if len(state) == 0:
                     state['step'] = 0
                     state['m'] = torch.zeros_like(p.data)
@@ -119,5 +119,6 @@ class Orth_grad(Optimizer):
                 denom = v_hat.sqrt().add_(group['eps'])
                 update = m_hat / denom + effective_alpha * state['g_orth']
                 p.data.add_(update, alpha=-group['lr'])
+
 
         return loss
